@@ -220,7 +220,7 @@ export type Database = {
           location_lat?: number | null
           location_lng?: number | null
           remaining_amount?: number
-          rental_code: string
+          rental_code?: string
           return_date: string
           start_date: string
           status?: string

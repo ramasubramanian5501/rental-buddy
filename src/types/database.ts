@@ -68,8 +68,20 @@ export interface Rental {
   remaining_amount: number;
   vehicle_id: string | null;
   driver_id: string | null;
+  driver_name: string | null;
+  driver_phone: string | null;
+  load_photo_url: string | null;
+  document_urls: string[];
   created_at: string;
   updated_at: string;
+}
+
+export interface RentalProductItem {
+  id: string;
+  rental_id: string;
+  product_id: string;
+  quantity: number;
+  created_at: string;
 }
 
 export interface RentalProduct {
@@ -85,6 +97,7 @@ export interface RentalWithDetails extends Rental {
   vehicle?: Vehicle;
   driver?: Driver;
   products?: Product[];
+  productItems?: (RentalProductItem & { product: Product })[];
 }
 
 export type ProductFormData = Omit<Product, "id" | "created_at" | "updated_at" | "rent_count">;

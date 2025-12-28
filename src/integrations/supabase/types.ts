@@ -148,6 +148,45 @@ export type Database = {
         }
         Relationships: []
       }
+      rental_product_items: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          quantity: number
+          rental_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity?: number
+          rental_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          rental_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rental_product_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rental_product_items_rental_id_fkey"
+            columns: ["rental_id"]
+            isOneToOne: false
+            referencedRelation: "rentals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rental_products: {
         Row: {
           created_at: string
@@ -194,8 +233,12 @@ export type Database = {
           advance_percent: number
           created_at: string
           customer_id: string
+          document_urls: string[] | null
           driver_id: string | null
+          driver_name: string | null
+          driver_phone: string | null
           id: string
+          load_photo_url: string | null
           location: string | null
           location_lat: number | null
           location_lng: number | null
@@ -214,8 +257,12 @@ export type Database = {
           advance_percent?: number
           created_at?: string
           customer_id: string
+          document_urls?: string[] | null
           driver_id?: string | null
+          driver_name?: string | null
+          driver_phone?: string | null
           id?: string
+          load_photo_url?: string | null
           location?: string | null
           location_lat?: number | null
           location_lng?: number | null
@@ -234,8 +281,12 @@ export type Database = {
           advance_percent?: number
           created_at?: string
           customer_id?: string
+          document_urls?: string[] | null
           driver_id?: string | null
+          driver_name?: string | null
+          driver_phone?: string | null
           id?: string
+          load_photo_url?: string | null
           location?: string | null
           location_lat?: number | null
           location_lng?: number | null

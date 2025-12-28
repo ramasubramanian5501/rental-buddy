@@ -11,105 +11,44 @@ import {
   Eye,
   Edit,
   MapPin,
+  Loader2,
+  Trash2,
 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
-
-interface Customer {
-  id: string;
-  name: string;
-  phone: string;
-  email?: string;
-  aadhaarNumber: string;
-  panNumber: string;
-  company: string;
-  totalRentals: number;
-  activeRentals: number;
-  totalSpent: number;
-  lastRental?: string;
-  address?: string;
-}
-
-const sampleCustomers: Customer[] = [
-  {
-    id: "CUST-001",
-    name: "Rajesh Kumar",
-    phone: "+91 98765 43210",
-    email: "rajesh@construction.com",
-    aadhaarNumber: "XXXX XXXX 1234",
-    panNumber: "ABCDE1234F",
-    company: "Rajesh Construction Co.",
-    totalRentals: 24,
-    activeRentals: 2,
-    totalSpent: 485000,
-    lastRental: "2025-12-26",
-    address: "Andheri East, Mumbai",
-  },
-  {
-    id: "CUST-002",
-    name: "Vikram Sharma",
-    phone: "+91 87654 32109",
-    email: "vikram@metrobuilders.com",
-    aadhaarNumber: "XXXX XXXX 5678",
-    panNumber: "FGHIJ5678K",
-    company: "Metro Builders Pvt Ltd",
-    totalRentals: 18,
-    activeRentals: 1,
-    totalSpent: 725000,
-    lastRental: "2025-12-25",
-    address: "BKC, Mumbai",
-  },
-  {
-    id: "CUST-003",
-    name: "Priya Sharma",
-    phone: "+91 76543 21098",
-    aadhaarNumber: "XXXX XXXX 9012",
-    panNumber: "LMNOP9012Q",
-    company: "Sharma Developers",
-    totalRentals: 8,
-    activeRentals: 1,
-    totalSpent: 125000,
-    lastRental: "2025-12-24",
-    address: "Thane West",
-  },
-  {
-    id: "CUST-004",
-    name: "Arun Mehta",
-    phone: "+91 65432 10987",
-    email: "arun@buildright.com",
-    aadhaarNumber: "XXXX XXXX 3456",
-    panNumber: "RSTUV3456W",
-    company: "BuildRight Infrastructure",
-    totalRentals: 12,
-    activeRentals: 1,
-    totalSpent: 280000,
-    lastRental: "2025-12-27",
-    address: "Powai, Mumbai",
-  },
-  {
-    id: "CUST-005",
-    name: "Sunita Patel",
-    phone: "+91 54321 09876",
-    aadhaarNumber: "XXXX XXXX 7890",
-    panNumber: "XYZAB7890C",
-    company: "Patel Construction",
-    totalRentals: 32,
-    activeRentals: 0,
-    totalSpent: 890000,
-    lastRental: "2025-12-25",
-    address: "Navi Mumbai",
-  },
-];
+import { CustomerFormModal } from "@/components/modals/CustomerFormModal";
+import { useCustomers, useDeleteCustomer } from "@/hooks/useCustomers";
+import { Customer } from "@/types/database";
 
 const Customers = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [customers] = useState<Customer[]>(sampleCustomers);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+
+  const { data: customers = [], isLoading } = useCustomers();
+  const deleteCustomer = useDeleteCustomer();
 
   const filteredCustomers = customers.filter(
     (customer) =>
       customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       customer.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.phone.includes(searchQuery)
+      (customer.phone && customer.phone.includes(searchQuery))
   );
+
+  const handleEdit = (customer: Customer) => {
+    setEditingCustomer(customer);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Are you sure you want to delete this customer?")) {
+      await deleteCustomer.mutateAsync(id);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingCustomer(null);
+  };
 
   return (
     <MainLayout>
@@ -125,7 +64,7 @@ const Customers = () => {
             Manage customer information and documents
           </p>
         </div>
-        <button className="btn-accent">
+        <button className="btn-accent" onClick={() => setIsModalOpen(true)}>
           <Plus className="w-4 h-4" />
           Add Customer
         </button>
@@ -150,113 +89,125 @@ const Customers = () => {
         </div>
       </motion.div>
 
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-8 h-8 animate-spin text-accent" />
+        </div>
+      )}
+
       {/* Customers Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className="bg-card rounded-xl border border-border overflow-hidden"
-      >
-        <div className="overflow-x-auto">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Customer</th>
-                <th>Company</th>
-                <th>Contact</th>
-                <th>Documents</th>
-                <th>Rentals</th>
-                <th>Total Spent</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredCustomers.map((customer, index) => (
-                <motion.tr
-                  key={customer.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 + index * 0.05 }}
-                >
-                  <td>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <User className="w-5 h-5 text-primary" />
+      {!isLoading && filteredCustomers.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="bg-card rounded-xl border border-border overflow-hidden"
+        >
+          <div className="overflow-x-auto">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Company</th>
+                  <th>Contact</th>
+                  <th>Documents</th>
+                  <th>Rentals</th>
+                  <th>Total Spent</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredCustomers.map((customer, index) => (
+                  <motion.tr
+                    key={customer.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 + index * 0.05 }}
+                  >
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{customer.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {customer.id.slice(0, 8)}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">{customer.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {customer.id}
-                        </p>
+                    </td>
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-muted-foreground" />
+                        <div>
+                          <p className="font-medium">{customer.company}</p>
+                          {customer.address && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {customer.address}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="flex items-center gap-2">
-                      <Building2 className="w-4 h-4 text-muted-foreground" />
+                    </td>
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-4 h-4 text-muted-foreground" />
+                        <span>{customer.phone || "N/A"}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-muted-foreground" />
+                        <div className="text-sm">
+                          <p>Aadhaar: {customer.aadhaar_number || "N/A"}</p>
+                          <p>PAN: {customer.pan_number || "N/A"}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
                       <div>
-                        <p className="font-medium">{customer.company}</p>
-                        {customer.address && (
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
-                            {customer.address}
+                        <p className="font-semibold">{customer.total_rentals}</p>
+                        {customer.active_rentals > 0 && (
+                          <p className="text-xs text-success">
+                            {customer.active_rentals} active
                           </p>
                         )}
                       </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-muted-foreground" />
-                      <span>{customer.phone}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-muted-foreground" />
-                      <div className="text-sm">
-                        <p>Aadhaar: {customer.aadhaarNumber}</p>
-                        <p>PAN: {customer.panNumber}</p>
+                    </td>
+                    <td>
+                      <p className="font-bold text-accent">
+                        ₹{Number(customer.total_spent).toLocaleString()}
+                      </p>
+                    </td>
+                    <td>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleEdit(customer)}
+                          className="p-2 rounded-lg hover:bg-muted transition-colors"
+                        >
+                          <Edit className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(customer.id)}
+                          className="p-2 rounded-lg hover:bg-destructive/10 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </button>
                       </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div>
-                      <p className="font-semibold">{customer.totalRentals}</p>
-                      {customer.activeRentals > 0 && (
-                        <p className="text-xs text-success">
-                          {customer.activeRentals} active
-                        </p>
-                      )}
-                    </div>
-                  </td>
-                  <td>
-                    <p className="font-bold text-accent">
-                      ₹{customer.totalSpent.toLocaleString()}
-                    </p>
-                  </td>
-                  <td>
-                    <div className="flex items-center gap-1">
-                      <button className="p-2 rounded-lg hover:bg-muted transition-colors">
-                        <Eye className="w-4 h-4 text-muted-foreground" />
-                      </button>
-                      <button className="p-2 rounded-lg hover:bg-muted transition-colors">
-                        <Edit className="w-4 h-4 text-muted-foreground" />
-                      </button>
-                      <button className="p-2 rounded-lg hover:bg-muted transition-colors">
-                        <MoreVertical className="w-4 h-4 text-muted-foreground" />
-                      </button>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </motion.div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
+      )}
 
       {/* Empty State */}
-      {filteredCustomers.length === 0 && (
+      {!isLoading && filteredCustomers.length === 0 && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -265,14 +216,23 @@ const Customers = () => {
           <User className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">No customers found</h3>
           <p className="text-muted-foreground mb-6">
-            Try adjusting your search criteria
+            {customers.length === 0
+              ? "Add your first customer to get started"
+              : "Try adjusting your search criteria"}
           </p>
-          <button className="btn-accent">
+          <button className="btn-accent" onClick={() => setIsModalOpen(true)}>
             <Plus className="w-4 h-4" />
             Add Customer
           </button>
         </motion.div>
       )}
+
+      {/* Modal */}
+      <CustomerFormModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        customer={editingCustomer}
+      />
     </MainLayout>
   );
 };

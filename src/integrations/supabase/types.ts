@@ -14,7 +14,305 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      customers: {
+        Row: {
+          aadhaar_number: string | null
+          active_rentals: number
+          address: string | null
+          company: string
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          pan_number: string | null
+          phone: string | null
+          total_rentals: number
+          total_spent: number
+          updated_at: string
+        }
+        Insert: {
+          aadhaar_number?: string | null
+          active_rentals?: number
+          address?: string | null
+          company: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          pan_number?: string | null
+          phone?: string | null
+          total_rentals?: number
+          total_spent?: number
+          updated_at?: string
+        }
+        Update: {
+          aadhaar_number?: string | null
+          active_rentals?: number
+          address?: string | null
+          company?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          pan_number?: string | null
+          phone?: string | null
+          total_rentals?: number
+          total_spent?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      drivers: {
+        Row: {
+          assigned_vehicle_id: string | null
+          created_at: string
+          id: string
+          license_number: string | null
+          name: string
+          phone: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_vehicle_id?: string | null
+          created_at?: string
+          id?: string
+          license_number?: string | null
+          name: string
+          phone: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_vehicle_id?: string | null
+          created_at?: string
+          id?: string
+          license_number?: string | null
+          name?: string
+          phone?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drivers_assigned_vehicle_id_fkey"
+            columns: ["assigned_vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          available_count: number
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          rent_count: number
+          rent_per_hour: number
+          size_unit: string
+          size_value: string
+          stock_count: number
+          updated_at: string
+        }
+        Insert: {
+          available_count?: number
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          rent_count?: number
+          rent_per_hour?: number
+          size_unit?: string
+          size_value: string
+          stock_count?: number
+          updated_at?: string
+        }
+        Update: {
+          available_count?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          rent_count?: number
+          rent_per_hour?: number
+          size_unit?: string
+          size_value?: string
+          stock_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rental_products: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          quantity: number
+          rental_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity?: number
+          rental_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          rental_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rental_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rental_products_rental_id_fkey"
+            columns: ["rental_id"]
+            isOneToOne: false
+            referencedRelation: "rentals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rentals: {
+        Row: {
+          actual_return_date: string | null
+          advance_amount: number
+          advance_percent: number
+          created_at: string
+          customer_id: string
+          driver_id: string | null
+          id: string
+          location: string | null
+          location_lat: number | null
+          location_lng: number | null
+          remaining_amount: number
+          rental_code: string
+          return_date: string
+          start_date: string
+          status: string
+          total_amount: number
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          actual_return_date?: string | null
+          advance_amount?: number
+          advance_percent?: number
+          created_at?: string
+          customer_id: string
+          driver_id?: string | null
+          id?: string
+          location?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          remaining_amount?: number
+          rental_code: string
+          return_date: string
+          start_date: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          actual_return_date?: string | null
+          advance_amount?: number
+          advance_percent?: number
+          created_at?: string
+          customer_id?: string
+          driver_id?: string | null
+          id?: string
+          location?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          remaining_amount?: number
+          rental_code?: string
+          return_date?: string
+          start_date?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rentals_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rentals_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rentals_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          assigned_driver_id: string | null
+          capacity: string
+          created_at: string
+          id: string
+          status: string
+          updated_at: string
+          vehicle_number: string
+          vehicle_type: string
+        }
+        Insert: {
+          assigned_driver_id?: string | null
+          capacity: string
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          vehicle_number: string
+          vehicle_type: string
+        }
+        Update: {
+          assigned_driver_id?: string | null
+          capacity?: string
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          vehicle_number?: string
+          vehicle_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_vehicles_driver"
+            columns: ["assigned_driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

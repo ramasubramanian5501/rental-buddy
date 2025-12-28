@@ -1,18 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
-import { Icon, LatLng } from 'leaflet';
+import L from 'leaflet';
 import { MapPin, Navigation } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default marker icons in React-Leaflet
-const defaultIcon = new Icon({
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
 });
 
 interface LocationPickerProps {
@@ -30,14 +27,21 @@ function MapClickHandler({ onLocationSelect }: { onLocationSelect: (lat: number,
   return null;
 }
 
-function MapController({ center }: { center: [number, number] }) {
+function MapController({ center }: { center: [number, number] | null }) {
   const map = useMap();
   
   useEffect(() => {
-    map.setView(center, map.getZoom());
+    if (center) {
+      map.setView(center, map.getZoom());
+    }
   }, [center, map]);
   
   return null;
+}
+
+function MapMarker({ position }: { position: [number, number] | null }) {
+  if (!position) return null;
+  return <Marker position={position} />;
 }
 
 export function LocationPicker({ onLocationSelect, initialLocation, initialName = '' }: LocationPickerProps) {
@@ -50,7 +54,7 @@ export function LocationPicker({ onLocationSelect, initialLocation, initialName 
   // Default center: Mumbai, India
   const defaultCenter: [number, number] = [19.0760, 72.8777];
 
-  const handleMapClick = async (lat: number, lng: number) => {
+  const handleMapClick = useCallback(async (lat: number, lng: number) => {
     setPosition([lat, lng]);
     setIsLoading(true);
     
@@ -83,7 +87,7 @@ export function LocationPicker({ onLocationSelect, initialLocation, initialName 
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [onLocationSelect]);
 
   const handleGetCurrentLocation = () => {
     if (navigator.geolocation) {
@@ -116,7 +120,7 @@ export function LocationPicker({ onLocationSelect, initialLocation, initialName 
       
       <div className="relative rounded-lg overflow-hidden border border-border h-[250px]">
         <MapContainer
-          center={position || defaultCenter}
+          center={defaultCenter}
           zoom={12}
           style={{ height: '100%', width: '100%' }}
           className="z-0"
@@ -126,12 +130,8 @@ export function LocationPicker({ onLocationSelect, initialLocation, initialName 
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapClickHandler onLocationSelect={handleMapClick} />
-          {position && (
-            <>
-              <Marker position={position} icon={defaultIcon} />
-              <MapController center={position} />
-            </>
-          )}
+          <MapController center={position} />
+          <MapMarker position={position} />
         </MapContainer>
         
         {isLoading && (

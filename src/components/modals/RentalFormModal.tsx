@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Minus, Upload, Image, FileText, MapPin, Trash2 } from "lucide-react";
+import { X, Plus, Minus, Upload, Image, FileText, MapPin, Trash2, Package, IndianRupee, Layers } from "lucide-react";
 import { useCreateRental, uploadRentalFile } from "@/hooks/useRentals";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useProducts } from "@/hooks/useProducts";
 import { useVehicles, useDrivers } from "@/hooks/useFleet";
 import { toast } from "sonner";
-
+import { LocationPicker } from "@/components/maps/LocationPicker";
 interface RentalFormModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -411,7 +411,7 @@ export function RentalFormModal({ isOpen, onClose }: RentalFormModalProps) {
                 </div>
               </div>
 
-              {/* Site Location Selection */}
+              {/* Site Location Selection with Map */}
               <div>
                 <label className="block text-sm font-medium mb-2">
                   <MapPin className="w-4 h-4 inline mr-2" />
@@ -433,23 +433,29 @@ export function RentalFormModal({ isOpen, onClose }: RentalFormModalProps) {
                     </button>
                   ))}
                 </div>
-                <input
-                  type="text"
-                  value={formData.location}
-                  onChange={(e) =>
-                    setFormData({ ...formData, location: e.target.value, location_lat: null, location_lng: null })
-                  }
-                  className="input-field"
-                  placeholder="Or enter custom location"
+                
+                {/* Interactive Map */}
+                <LocationPicker
+                  onLocationSelect={(loc) => {
+                    setFormData({
+                      ...formData,
+                      location: loc.name,
+                      location_lat: loc.lat,
+                      location_lng: loc.lng,
+                    });
+                  }}
+                  initialLocation={formData.location_lat && formData.location_lng ? { lat: formData.location_lat, lng: formData.location_lng } : null}
+                  initialName={formData.location}
                 />
               </div>
 
-              {/* Products Selection with Quantity */}
+              {/* Products Selection with Full Details */}
               <div>
                 <label className="block text-sm font-medium mb-2">
+                  <Package className="w-4 h-4 inline mr-2" />
                   Equipment Selection * ({totalProductsSelected} items selected)
                 </label>
-                <div className="space-y-2 max-h-60 overflow-y-auto border border-border rounded-lg p-3">
+                <div className="space-y-3 max-h-80 overflow-y-auto border border-border rounded-lg p-3">
                   {availableProducts.map((product) => {
                     const selection = selectedProducts.find(p => p.product_id === product.id);
                     const isSelected = !!selection;
@@ -457,58 +463,97 @@ export function RentalFormModal({ isOpen, onClose }: RentalFormModalProps) {
                     return (
                       <div
                         key={product.id}
-                        className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
-                          isSelected ? "bg-accent/10 border border-accent" : "hover:bg-muted border border-transparent"
+                        className={`p-4 rounded-lg transition-all cursor-pointer ${
+                          isSelected 
+                            ? "bg-accent/10 border-2 border-accent shadow-sm" 
+                            : "bg-muted/50 border border-border hover:border-accent/50 hover:bg-muted"
                         }`}
+                        onClick={() => handleProductToggle(product.id)}
                       >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleProductToggle(product.id)}
-                          className="w-4 h-4 rounded border-border"
-                        />
-                        <div className="flex-1">
-                          <span className="font-medium">{product.name}</span>
-                          <span className="text-sm text-muted-foreground ml-2">
-                            ({product.size_value} {product.size_unit})
-                          </span>
-                        </div>
-                        <span className="text-sm text-muted-foreground">
-                          ₹{product.rent_per_hour}/hr
-                        </span>
-                        {isSelected && (
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleQuantityChange(product.id, -1)}
-                              className="p-1 rounded bg-muted hover:bg-muted/80"
-                              disabled={selection.quantity <= 1}
-                            >
-                              <Minus className="w-4 h-4" />
-                            </button>
-                            <span className="w-8 text-center font-medium">
-                              {selection.quantity}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleQuantityChange(product.id, 1)}
-                              className="p-1 rounded bg-muted hover:bg-muted/80"
-                              disabled={selection.quantity >= product.available_count}
-                            >
-                              <Plus className="w-4 h-4" />
-                            </button>
+                        <div className="flex items-start gap-3">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleProductToggle(product.id)}
+                            className="w-5 h-5 rounded border-border mt-1"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          
+                          <div className="flex-1 min-w-0">
+                            {/* Product Name & Category */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-semibold text-foreground">{product.name}</span>
+                              <span className="px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary font-medium">
+                                {product.category}
+                              </span>
+                            </div>
+                            
+                            {/* Size & Description */}
+                            <div className="mt-1 flex items-center gap-3 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Layers className="w-3.5 h-3.5" />
+                                {product.size_value} {product.size_unit}
+                              </span>
+                              {product.description && (
+                                <span className="truncate">{product.description}</span>
+                              )}
+                            </div>
+                            
+                            {/* Pricing & Availability */}
+                            <div className="mt-2 flex items-center gap-4">
+                              <span className="flex items-center gap-1 text-sm font-medium text-accent">
+                                <IndianRupee className="w-3.5 h-3.5" />
+                                {product.rent_per_hour}/hour
+                              </span>
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                product.available_count > 5 
+                                  ? 'bg-green-500/10 text-green-600' 
+                                  : product.available_count > 2 
+                                    ? 'bg-yellow-500/10 text-yellow-600'
+                                    : 'bg-red-500/10 text-red-600'
+                              }`}>
+                                {product.available_count} of {product.stock_count} available
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                Rented {product.rent_count} times
+                              </span>
+                            </div>
                           </div>
-                        )}
-                        <span className="text-xs badge badge-success">
-                          {product.available_count} avail
-                        </span>
+                          
+                          {/* Quantity Controls */}
+                          {isSelected && (
+                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                type="button"
+                                onClick={() => handleQuantityChange(product.id, -1)}
+                                className="p-1.5 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                                disabled={selection.quantity <= 1}
+                              >
+                                <Minus className="w-4 h-4" />
+                              </button>
+                              <span className="w-10 text-center font-bold text-lg">
+                                {selection.quantity}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleQuantityChange(product.id, 1)}
+                                className="p-1.5 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                                disabled={selection.quantity >= product.available_count}
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
                   {availableProducts.length === 0 && (
-                    <p className="text-muted-foreground text-center py-4">
-                      No products available
-                    </p>
+                    <div className="text-center py-8">
+                      <Package className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
+                      <p className="text-muted-foreground font-medium">No products available</p>
+                      <p className="text-sm text-muted-foreground mt-1">Add products from the Products page first</p>
+                    </div>
                   )}
                 </div>
               </div>

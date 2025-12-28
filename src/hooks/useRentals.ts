@@ -141,20 +141,18 @@ export function useCreateRental() {
 }
 
 export async function uploadRentalFile(file: File, folder: string): Promise<string> {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-  
-  const { error: uploadError } = await supabase.storage
-    .from('rental-documents')
-    .upload(fileName, file);
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('folder', `rentals/${folder}`);
 
-  if (uploadError) throw uploadError;
+  const { data, error } = await supabase.functions.invoke('upload-cloudinary', {
+    body: formData,
+  });
 
-  const { data } = supabase.storage
-    .from('rental-documents')
-    .getPublicUrl(fileName);
+  if (error) throw error;
+  if (data.error) throw new Error(data.error);
 
-  return data.publicUrl;
+  return data.url;
 }
 
 export function useUpdateRental() {
